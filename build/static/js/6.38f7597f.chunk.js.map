@@ -1,0 +1,1 @@
+{"version":3,"sources":["pages/One.js"],"names":["One","Error"],"mappings":"uHAAA,yDAEaA,EAAM,WACjB,MAAM,IAAIC,MAAM,SAIHD","file":"static/js/6.38f7597f.chunk.js","sourcesContent":["import React from \"react\";\n\nexport const One = () => {\n  throw new Error(\"help\");\n  return <h2>One</h2>;\n};\n\nexport default One;\n"],"sourceRoot":""}
