@@ -1,7 +1,8 @@
 import { useState } from "react";
+import { connect } from "react-redux";
+import { counterButtonClicked } from "./actions";
 
-export const CounterButton = () => {
-  const [numberOfClicks, setNumberOfClicks] = useState(0);
+export const CounterButton = ({ numberOfClicks, dispatch }) => {
   const [incrementBy, setIncrementBy] = useState(1);
 
   return (
@@ -15,9 +16,13 @@ export const CounterButton = () => {
           type="number"
         />
       </label>
-      <button onClick={() => setNumberOfClicks(numberOfClicks + incrementBy)}>
+      <button onClick={() => dispatch(counterButtonClicked(incrementBy))}>
         Click
       </button>
     </>
   );
 };
+
+const mapStateToProps = (state) => ({ numberOfClicks: state.numberOfClicks });
+
+export default connect(mapStateToProps)(CounterButton);
