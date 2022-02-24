@@ -1,51 +1,80 @@
-import express from 'express';
-import React from 'react';
-import { ServerStyleSheet } from 'styled-components';
-import { renderToString } from 'react-dom/server';
-import { StaticRouter } from 'react-router-dom';
-import path from 'path';
-import fs from 'fs';
-import App from './src/App';
+import express from "express";
+import React from "react";
+import { ServerStyleSheet } from "styled-components";
+import { renderToString } from "react-dom/server";
+import { StaticRouter } from "react-router-dom";
+import "isomorphic-fetch";
+import path from "path";
+import fs from "fs";
+
+import App from "./src/App";
+import { InitialDataContext } from "./src/InitialDataContext";
+
+global.window = {};
 
 const app = express();
 
-app.use(express.static('./build', { index: false }))
+app.use(express.static("./build", { index: false }));
 
 const articles = [
-	{ title: 'Article 1', author: 'Bob' },
-	{ title: 'Article 2', author: 'Betty' },
-	{ title: 'Article 3', author: 'Frank' },
+  { title: "Article 1", author: "Bob" },
+  { title: "Article 2", author: "Betty" },
+  { title: "Article 3", author: "Frank" },
 ];
 
-app.get('/api/articles', (req, res) => {
-	const loadedArticles = articles;
-	res.json(loadedArticles);
+app.get("/api/articles", (req, res) => {
+  const loadedArticles = articles;
+  res.json(loadedArticles);
 });
 
-app.get('/*', (req, res) => {
-	const sheet = new ServerStyleSheet();
+app.get("/*", async (req, res) => {
+  const sheet = new ServerStyleSheet();
 
-	const reactApp = renderToString(
-		sheet.collectStyles(
-			<StaticRouter location={req.url}>
-				<App />
-			</StaticRouter>
-		)
-	);
+  const contextObj = { _isServerSide: true, _requests: [], _data: {} };
 
-	const templateFile = path.resolve('./build/index.html');
-	fs.readFile(templateFile, 'utf8', (err, data) => {
-		if (err) {
-			return res.status(500).send(err);
-		}
+  renderToString(
+    sheet.collectStyles(
+      <InitialDataContext.Provider value={contextObj}>
+        <StaticRouter location={req.url}>
+          <App />
+        </StaticRouter>
+      </InitialDataContext.Provider>
+    )
+  );
 
-		return res.send(
-			data.replace('<div id="root"></div>', `<div id="root">${reactApp}</div>`)
-				.replace('{{ styles }}', sheet.getStyleTags())
-		)
-	});
+  console.log(contextObj._requests);
+  await Promise.all(contextObj._requests);
+  contextObj._isServerSide = false;
+  delete contextObj._requests;
+
+  const reactApp = renderToString(
+    <InitialDataContext.Provider value={contextObj}>
+      <StaticRouter location={req.url}>
+        <App />
+      </StaticRouter>
+    </InitialDataContext.Provider>
+  );
+
+  const templateFile = path.resolve("./build/index.html");
+  fs.readFile(templateFile, "utf8", (err, data) => {
+    if (err) {
+      return res.status(500).send(err);
+    }
+
+    return res.send(
+      data
+        .replace(
+          '<div id="root"></div>',
+          `<script>window.preloadedData =
+		  ${JSON.stringify(
+        contextObj
+      )};console.log('running script ',Date.now());</script><div id="root">${reactApp}</div>`
+        )
+        .replace("{{ styles }}", sheet.getStyleTags())
+    );
+  });
 });
 
 app.listen(8080, () => {
-	console.log('Server is listening on port 8080');
+  console.log("Server is listening on port 8080");
 });
