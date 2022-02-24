@@ -1,2 +1,0 @@
-(this["webpackJsonpreact-ssr-blog"]=this["webpackJsonpreact-ssr-blog"]||[]).push([[7],{35:function(e,r,t){"use strict";t.r(r),t.d(r,"Three",(function(){return n}));t(0);var s=t(1),n=function(){return Object(s.jsx)("h2",{children:"Three"})};r.default=n}}]);
-//# sourceMappingURL=7.ebcee16b.chunk.js.map
